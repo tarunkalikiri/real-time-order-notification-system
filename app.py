@@ -1,7 +1,14 @@
 import asyncio
+import os
 import asyncpg
+from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+
+# Load environment variables
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 app = FastAPI()
 
@@ -34,7 +41,7 @@ async def broadcast(message):
     for client in clients:
         try:
             await client.send_text(message)
-        except:
+        except Exception:
             disconnected_clients.append(client)
 
     for client in disconnected_clients:
@@ -47,16 +54,19 @@ def notification_handler(connection, pid, channel, payload):
 
 
 async def listen_db():
-    conn = await asyncpg.connect(
-        "postgresql://neondb_owner:npg_rZ6XfUpcK2xW@ep-shiny-leaf-aq8v0a7z-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-    )
+    conn = await asyncpg.connect(DATABASE_URL)
 
-    await conn.add_listener("orders_channel", notification_handler)
+    await conn.add_listener(
+        "orders_channel",
+        notification_handler
+    )
 
     print("Listening for database changes...")
 
     while True:
         await asyncio.sleep(3600)
+
+
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(listen_db())
