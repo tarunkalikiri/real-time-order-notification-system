@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Orders</title>
+</head>
+<body>
+
+<h2>Real-Time Order Updates</h2>
+
+<ul id="messages"></ul>
+
+<script>
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+    ws.onopen = () => {
+        console.log("Connected");
+        ws.send("hello");
+    };
+
+    ws.onmessage = (event) => {
+        const li = document.createElement("li");
+        li.innerText = event.data;
+        document.getElementById("messages").appendChild(li);
+    };
+</script>
+
+</body>
+</html>
